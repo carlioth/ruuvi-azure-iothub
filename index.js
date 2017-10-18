@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  const ruuvi = require('node-ruuvitag');
+  var config = require('./config');
   // var Protocol = require('azure-iot-device-mqtt').Mqtt;
   // Uncomment one of these transports and then change it in fromConnectionString to test other transports
   // var Protocol = require('azure-iot-device-amqp').AmqpWs;
@@ -10,14 +12,9 @@
   var Client = require('azure-iot-device').Client;
   var Message = require('azure-iot-device').Message;
 
-  var config = require('./config');
-
-  // String containing Hostname, Device Id & Device Key in the following formats:
-  //  "HostName=<iothub_host_name>;DeviceId=<device_id>;SharedAccessKey=<device_key>"
-  var connectionString = config.connectionString;
 
   // fromConnectionString must specify a transport constructor, coming from any transport package.
-  var client = Client.fromConnectionString(connectionString, Protocol);
+  var client = Client.fromConnectionString(config.connectionString, Protocol);
 
   var connectCallback = function (err) {
     if (err) {
@@ -34,18 +31,6 @@
         // When abandoning the message, IoT Hub will immediately try to resend it. The method to use is client.abandon(msg, callback).
         // MQTT is simpler: it accepts the message by default, and doesn't support rejecting or abandoning a message.
       });
-
-      // // Create a message and send it to the IoT Hub every second
-      // var sendInterval = setInterval(function () {
-      //   var windSpeed = 10 + (Math.random() * 4); // range: [10, 14]
-      //   var temperature = 20 + (Math.random() * 10); // range: [20, 30]
-      //   var humidity = 60 + (Math.random() * 20); // range: [60, 80]
-      //   var data = JSON.stringify({ deviceId: 'myFirstDevice', windSpeed: windSpeed, temperature: temperature, humidity: humidity });
-      //   var message = new Message(data);
-      //   message.properties.add('temperatureAlert', (temperature > 28) ? 'true' : 'false');
-      //   console.log('Sending message: ' + message.getData());
-      //   client.sendEvent(message, printResultFor('send'));
-      // }, 2000);
 
       client.on('error', function (err) {
         console.error(err.message);
@@ -69,21 +54,12 @@
     };
   }
 
-
   // Set up ruuvitag event handlers
-
-  const ruuvi = require('node-ruuvitag');
-
-
   ruuvi.on('found', tag => {
-
     console.log('Found RuuviTag, id: ' + tag.id);
 
     tag.on('updated', data => {
-
       //console.log('Got data from RuuviTag ' + tag.id + ':\n' + JSON.stringify(data, null, '\t'));
-
-
       var data = JSON.stringify({
         deviceId: 'ruuvi-' + tag.id,
         "rssi": data.rssi,
@@ -98,17 +74,8 @@
       var message = new Message(data);
       //   message.properties.add('temperatureAlert', (temperature > 28) ? 'true' : 'false');
       console.log('Sending message: ' + message.getData());
-      //   client.sendEvent(message, printResultFor('send'));
-
-
-
-
+      client.sendEvent(message, printResultFor('send'));
     });
   });
-
-
-
-
-
 
 })();
