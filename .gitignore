@@ -57,3 +57,5 @@ typings/
 # dotenv environment variables file
 .env
 
+# Actual running configuration
+config.js
