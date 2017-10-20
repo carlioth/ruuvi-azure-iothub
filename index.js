@@ -13,7 +13,7 @@
 
   var config = require('./config');
   var tagMapper = require('./tag-mapper');
-  
+
 
 
   var messageBuffer = {};
@@ -65,14 +65,14 @@
     for (var device in messageBuffer) {
       var deviceId = device;
       var message = messageBuffer[device];
-      
+
       // remove from buffer so that it does not get sent multiple times (if tag connection is lost)
-      delete messageBuffer[device]; 
+      delete messageBuffer[device];
 
       console.log('Sending message: ' + message.getData());
       client.sendEvent(message, printResultFor('send'));
 
-    }          
+    }
   }, config.sendInterval);
 
   // Set up ruuvitag event handlers
@@ -80,9 +80,15 @@
     console.log('Found RuuviTag, id: ' + tag.id);
 
     tag.on('updated', data => {
+      var deviceId = 'ruuvi-' + tag.id;
+      var timestamp = new Date();
+      var time = timestamp.toISOString();
+      var eventId = timestamp.getTime();
+
       // console.log('Got data from RuuviTag ' + tag.id + ':\n' + JSON.stringify(data, null, '\t'));
       var messageData = JSON.stringify({
-        deviceId: 'ruuvi-' + tag.id,
+        "eventId": eventId,
+        "deviceId": deviceId,
         "tagFriendlyName": tagMapper[tag.id],
         "rssi": data.rssi,
         "humidity": data.humidity,
@@ -92,7 +98,7 @@
         "accelerationY": data.accelerationY,
         "accelerationZ": data.accelerationZ,
         "battery": data.battery,
-        "time": new Date().toISOString()
+        "time": time
       });
       var message = new Message(messageData);
       messageBuffer[tag.id] = message;
