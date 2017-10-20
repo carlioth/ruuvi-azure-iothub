@@ -83,7 +83,7 @@
       var deviceId = 'ruuvi-' + tag.id;
       var timestamp = new Date();
       var time = timestamp.toISOString();
-      var eventId = deviceid + '_' + timestamp.getTime();
+      var eventId = deviceId + '_' + timestamp.getTime();
 
       // console.log('Got data from RuuviTag ' + tag.id + ':\n' + JSON.stringify(data, null, '\t'));
       var messageData = JSON.stringify({
