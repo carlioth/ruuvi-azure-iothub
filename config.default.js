@@ -7,7 +7,7 @@ var config = {}
 //  "HostName=<iothub_host_name>;DeviceId=<device_id>;SharedAccessKey=<device_key>"
 config.connectionString = '[IoT device connection string]';
 
-// TODO:  Collect advertisements and send then in batches wit this interval (milliseconds)
-config.batchInterval = 5000;
+// Send message interval per device (milliseconds)
+config.sendInterval = 15000;
 
 module.exports = config;

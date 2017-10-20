@@ -2,7 +2,6 @@
   'use strict';
 
   const ruuvi = require('node-ruuvitag');
-  var config = require('./config');
   // var Protocol = require('azure-iot-device-mqtt').Mqtt;
   // Uncomment one of these transports and then change it in fromConnectionString to test other transports
   // var Protocol = require('azure-iot-device-amqp').AmqpWs;
@@ -12,6 +11,12 @@
   var Client = require('azure-iot-device').Client;
   var Message = require('azure-iot-device').Message;
 
+  var config = require('./config');
+  var tagMapper = require('./tag-mapper');
+  
+
+
+  var messageBuffer = {};
 
   // fromConnectionString must specify a transport constructor, coming from any transport package.
   var client = Client.fromConnectionString(config.connectionString, Protocol);
@@ -54,14 +59,31 @@
     };
   }
 
+  // Create a message and send it to the IoT Hub with configured interval
+  var sendInterval = setInterval(function () {
+    console.log("Checking buffer for messages")
+    for (var device in messageBuffer) {
+      var deviceId = device;
+      var message = messageBuffer[device];
+      
+      // remove from buffer so that it does not get sent multiple times (if tag connection is lost)
+      delete messageBuffer[device]; 
+
+      console.log('Sending message: ' + message.getData());
+      client.sendEvent(message, printResultFor('send'));
+
+    }          
+  }, config.sendInterval);
+
   // Set up ruuvitag event handlers
   ruuvi.on('found', tag => {
     console.log('Found RuuviTag, id: ' + tag.id);
 
     tag.on('updated', data => {
-      //console.log('Got data from RuuviTag ' + tag.id + ':\n' + JSON.stringify(data, null, '\t'));
-      var data = JSON.stringify({
+      // console.log('Got data from RuuviTag ' + tag.id + ':\n' + JSON.stringify(data, null, '\t'));
+      var messageData = JSON.stringify({
         deviceId: 'ruuvi-' + tag.id,
+        "tagFriendlyName": tagMapper[tag.id],
         "rssi": data.rssi,
         "humidity": data.humidity,
         "temperature": data.temperature,
@@ -69,12 +91,13 @@
         "accelerationX": data.accelerationX,
         "accelerationY": data.accelerationY,
         "accelerationZ": data.accelerationZ,
-        "battery": data.battery
+        "battery": data.battery,
+        "time": new Date().toISOString()
       });
-      var message = new Message(data);
+      var message = new Message(messageData);
+      messageBuffer[tag.id] = message;
       //   message.properties.add('temperatureAlert', (temperature > 28) ? 'true' : 'false');
-      console.log('Sending message: ' + message.getData());
-      client.sendEvent(message, printResultFor('send'));
+      //console.log('Set message in buffer ' + messageBuffer[tag.id].getData());
     });
   });
 
