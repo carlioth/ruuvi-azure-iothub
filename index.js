@@ -16,7 +16,7 @@
 
 
 
-  var messageBuffer = {};
+  var messageStore = {};
 
   // fromConnectionString must specify a transport constructor, coming from any transport package.
   var client = Client.fromConnectionString(config.connectionString, Protocol);
@@ -24,6 +24,7 @@
   var connectCallback = function (err) {
     if (err) {
       console.error('Could not connect: ' + err.message);
+      setTimeout(function () { client.open(connectCallback); }, 10000);
     } else {
       console.log('Client connected');
       client.on('message', function (msg) {
@@ -44,7 +45,9 @@
       client.on('disconnect', function () {
         clearInterval(sendInterval);
         client.removeAllListeners();
-        client.open(connectCallback);
+
+        setTimeout(function () { client.open(connectCallback); }, 10000);
+        //client.open(connectCallback);
       });
     }
   };
@@ -62,12 +65,12 @@
   // Create a message and send it to the IoT Hub with configured interval
   var sendInterval = setInterval(function () {
     console.log("Checking buffer for messages")
-    for (var device in messageBuffer) {
+    for (var device in messageStore) {
       var deviceId = device;
-      var message = messageBuffer[device];
+      var message = messageStore[device];
 
       // remove from buffer so that it does not get sent multiple times (if tag connection is lost)
-      delete messageBuffer[device];
+      delete messageStore[device];
 
       console.log('Sending message: ' + message.getData());
       client.sendEvent(message, printResultFor('send'));
@@ -83,11 +86,9 @@
       var deviceId = 'ruuvi-' + tag.id;
       var timestamp = new Date();
       var time = timestamp.toISOString();
-      var eventId = deviceId + '_' + timestamp.getTime();
 
       // console.log('Got data from RuuviTag ' + tag.id + ':\n' + JSON.stringify(data, null, '\t'));
       var messageData = JSON.stringify({
-        "eventId": eventId,
         "deviceId": deviceId,
         "tagFriendlyName": tagMapper[tag.id],
         "rssi": data.rssi,
@@ -101,9 +102,7 @@
         "time": time
       });
       var message = new Message(messageData);
-      messageBuffer[tag.id] = message;
-      //   message.properties.add('temperatureAlert', (temperature > 28) ? 'true' : 'false');
-      //console.log('Set message in buffer ' + messageBuffer[tag.id].getData());
+      messageStore[tag.id] = message;
     });
   });
 
