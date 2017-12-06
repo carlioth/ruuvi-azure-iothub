@@ -39,6 +39,9 @@
 
       client.on('error', function (err) {
         console.error(err.message);
+        clearInterval(sendInterval);
+        client.removeAllListeners();
+        client.open(connectCallback);
       });
 
       client.on('disconnect', function () {
