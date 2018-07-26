@@ -2,8 +2,8 @@
 
 var tagMapper = {}
 
-tagMapper['c46de26e095d'] = 'Indoor';
-tagMapper['c0b98d55e059'] = 'Sauna';
-tagMapper['c7c975d40f58'] = 'Outdoor';
+tagMapper['d504aa854879'] = 'Greenhouse';
+tagMapper['dafa48397997'] = 'Indoor';
+tagMapper['fdd4babe263a'] = 'Outdoor';
 
 module.exports = tagMapper;
